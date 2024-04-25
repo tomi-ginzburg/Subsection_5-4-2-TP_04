@@ -39,6 +39,11 @@ void smartHomeSystemUpdate()
     fireAlarmUpdate();    
     pcSerialComUpdate();
     eventLogUpdate();
+    
+    /* CODIGO BLOQUEANTE
+     * El delay por definicion es bloqueante, sin embargo en este caso se hacen delays cortos
+     * de 10ms para que no influya de manera determinante en el funcionamiento
+     */ 
     delay(SYSTEM_TIME_INCREMENT_MS);
 }
 

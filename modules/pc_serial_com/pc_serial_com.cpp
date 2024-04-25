@@ -71,6 +71,7 @@ char pcSerialComCharRead()
 {
     char receivedChar = '\0';
     if( uartUsb.readable() ) {
+        
         uartUsb.read( &receivedChar, 1 );
     }
     return receivedChar;
@@ -116,14 +117,25 @@ void pcSerialComCodeCompleteWrite( bool state )
 
 //=====[Implementations of private functions]==================================
 
+/* 
+ * CODIGO BLOQUEANTE
+ * No saldra de la funcion hasta que haya hecho la cantidad de read strLength
+ *
+ * static void pcSerialComStringRead( char* str, int strLength )
+ * {
+ *     int strIndex;
+ *     for ( strIndex = 0; strIndex < strLength; strIndex++) {
+ *         uartUsb.read( &str[strIndex] , 1 );
+ *         uartUsb.write( &str[strIndex] ,1 );
+ *     }
+ *     str[strLength]='\0';
+ * }
+ */
+
+// CAMBIO POR
 static void pcSerialComStringRead( char* str, int strLength )
 {
-    int strIndex;
-    for ( strIndex = 0; strIndex < strLength; strIndex++) {
-        uartUsb.read( &str[strIndex] , 1 );
-        uartUsb.write( &str[strIndex] ,1 );
-    }
-    str[strLength]='\0';
+
 }
 
 static void pcSerialComGetCodeUpdate( char receivedChar )

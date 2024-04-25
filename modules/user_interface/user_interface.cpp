@@ -93,10 +93,19 @@ void userInterfaceCodeCompleteWrite( bool state )
 static void userInterfaceMatrixKeypadUpdate()
 {
     static int numberOfHashKeyReleased = 0;
+    
+    // Veo que tecla esta presionada
+    // Devuelve unicamente la primer tecla presionada
     char keyReleased = matrixKeypadUpdate();
 
     if( keyReleased != '\0' ) {
 
+        // Si la alarma esta activa y el sistema no esta bloqueado
+        // - Si no esta el led de codigo incorrecto
+        //      Agrego el caracter al codigo del usuario 
+        //      Si llego a 4 se completa el codigo
+        // - Si esta el led de codigo incorrecto y se presiono # 2 veces
+        //      se apaga el led de codigo incorrecto para habilitar un nuevo codigo
         if( sirenStateRead() && !systemBlockedStateRead() ) {
             if( !incorrectCodeStateRead() ) {
                 codeSequenceFromUserInterface[numberOfCodeChars] = keyReleased;
