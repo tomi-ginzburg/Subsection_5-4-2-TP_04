@@ -23,6 +23,18 @@ typedef enum{
     PC_SERIAL_SAVE_NEW_CODE,
 } pcSerialComMode_t;
 
+// 
+typedef enum{
+    RTC_INIT,
+    RTC_SET_YEAR,
+    RTC_SET_MONTH,
+    RTC_SET_DAY,
+    RTC_SET_HOUR,
+    RTC_SET_MINUTE,
+    RTC_SET_SECOND,
+    RTC_CONFIGURED
+} rtcConfiguration_t;
+
 //=====[Declaration and initialization of public global objects]===============
 
 UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
@@ -36,6 +48,7 @@ char codeSequenceFromPcSerialCom[CODE_NUMBER_OF_KEYS];
 //=====[Declaration and initialization of private global variables]============
 
 static pcSerialComMode_t pcSerialComMode = PC_SERIAL_COMMANDS;
+static rtcConfiguration_t rtcConfigurationMode = INIT;
 static bool codeComplete = false;
 static int numberOfCodeChars = 0;
 
@@ -84,6 +97,7 @@ void pcSerialComStringWrite( const char* str )
 
 void pcSerialComUpdate()
 {
+    if (rtcConfigurationMode != RTC_INIT && rtcConfigurationMode != RTC_CONFIGURED)
     char receivedChar = pcSerialComCharRead();
     if( receivedChar != '\0' ) {
         switch ( pcSerialComMode ) {
