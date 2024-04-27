@@ -11,7 +11,7 @@
 
 /* Para solucionar el bloqueo de la configuracion del rtc,
  * se implementa una maquina de estados en pcSerialComUpdate()
- * dentro de la funcion commandSetDateAndTime 
+ * dentro de la funcion SetDateAndTimeUpdate 
  */
 
 int main()

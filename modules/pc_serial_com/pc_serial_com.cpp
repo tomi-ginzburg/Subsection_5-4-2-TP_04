@@ -23,7 +23,7 @@ typedef enum{
     PC_SERIAL_SAVE_NEW_CODE,
 } pcSerialComMode_t;
 
-// 
+// Agrego varibale de estado para la FSM del RTC
 typedef enum{
     RTC_INIT,
     RTC_SET_YEAR,
@@ -47,10 +47,13 @@ char codeSequenceFromPcSerialCom[CODE_NUMBER_OF_KEYS];
 
 //=====[Declaration and initialization of private global variables]============
 
-static pcSerialComMode_t pcSerialComMode = PC_SERIAL_COMMANDS;
-static rtcConfiguration_t rtcConfigurationMode = INIT;
+static pcSerialComMode_t pcSerialComMode = PC_SERIAL_COMMANDS; 
 static bool codeComplete = false;
 static int numberOfCodeChars = 0;
+
+// Agrego variables para la FSM del RTC
+static rtcConfiguration_t rtcConfigurationMode = RTC_INIT;
+static int rtcStrLength = 0;
 
 //=====[Declarations (prototypes) of private functions]========================
 
@@ -97,7 +100,9 @@ void pcSerialComStringWrite( const char* str )
 
 void pcSerialComUpdate()
 {
-    if (rtcConfigurationMode != RTC_INIT && rtcConfigurationMode != RTC_CONFIGURED)
+    if (rtcConfigurationMode != RTC_INIT && rtcConfigurationMode != RTC_CONFIGURED){
+        SetDateAndTimeUpdate();
+    }
     char receivedChar = pcSerialComCharRead();
     if( receivedChar != '\0' ) {
         switch ( pcSerialComMode ) {
@@ -146,11 +151,7 @@ void pcSerialComCodeCompleteWrite( bool state )
  * }
  */
 
-// CAMBIO POR
-static void pcSerialComStringRead( char* str, int strLength )
-{
 
-}
 
 static void pcSerialComGetCodeUpdate( char receivedChar )
 {
@@ -189,7 +190,10 @@ static void pcSerialComCommandUpdate( char receivedChar )
         case '5': commandEnterNewCode(); break;
         case 'c': case 'C': commandShowCurrentTemperatureInCelsius(); break;
         case 'f': case 'F': commandShowCurrentTemperatureInFahrenheit(); break;
-        case 's': case 'S': commandSetDateAndTime(); break;
+        case 's': case 'S': 
+            rtcConfigurationMode = RTC_SET_YEAR;
+            rtcStrLength = 0; 
+            break;
         case 't': case 'T': commandShowDateAndTime(); break;
         case 'e': case 'E': commandShowStoredEvents(); break;
         default: availableCommands(); break;
@@ -277,14 +281,15 @@ static void commandShowCurrentTemperatureInFahrenheit()
     pcSerialComStringWrite( str );  
 }
 
-static void commandSetDateAndTime()
+static void SetDateAndTimeUpdate()
 {
-    char year[5] = "";
-    char month[3] = "";
-    char day[3] = "";
-    char hour[3] = "";
-    char minute[3] = "";
-    char second[3] = "";
+
+    static char year[5] = "";
+    static char month[3] = "";
+    static char day[3] = "";
+    static char hour[3] = "";
+    static char minute[3] = "";
+    static char second[3] = "";
     
     pcSerialComStringWrite("\r\nType four digits for the current year (YYYY): ");
     pcSerialComStringRead( year, 4);
