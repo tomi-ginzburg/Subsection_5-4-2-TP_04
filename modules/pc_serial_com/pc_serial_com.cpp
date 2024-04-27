@@ -53,7 +53,6 @@ static int numberOfCodeChars = 0;
 
 // Agrego variables para la FSM del RTC
 static rtcConfiguration_t rtcConfigurationMode = RTC_INIT;
-static int rtcStrLength = 0;
 
 //=====[Declarations (prototypes) of private functions]========================
 
@@ -100,8 +99,8 @@ void pcSerialComStringWrite( const char* str )
 
 void pcSerialComUpdate()
 {
-    if (rtcConfigurationMode != RTC_INIT && rtcConfigurationMode != RTC_CONFIGURED){
-        SetDateAndTimeUpdate();
+    if (rtcConfigurationMode != RTC_INIT){
+        setDateAndTimeUpdate();
     }
     char receivedChar = pcSerialComCharRead();
     if( receivedChar != '\0' ) {
@@ -150,8 +149,6 @@ void pcSerialComCodeCompleteWrite( bool state )
  *     str[strLength]='\0';
  * }
  */
-
-
 
 static void pcSerialComGetCodeUpdate( char receivedChar )
 {
@@ -281,44 +278,63 @@ static void commandShowCurrentTemperatureInFahrenheit()
     pcSerialComStringWrite( str );  
 }
 
-static void SetDateAndTimeUpdate()
+static void setRtcParameter(char* str, const int strMaxLength,
+                            const rtcConfiguration_t nextState, const char* strToDisplay)
 {
+    static int strLength = 0;
+    if (strLength < strMaxLength){
+        if (strLength == 0){
+            pcSerialComStringWrite(strToDisplay);
+        }
+        char receivedChar = pcSerialComCharRead();
+        if (receivedChar != '/0'){
+            str[strLength] = receivedChar;
+            strLength++;
+        }
+    }
+    pcSerialComStringWrite("\r\n");
+    rtcConfigurationMode = nextState;
+    strLength = 0;
+}
 
+static void setDateAndTimeUpdate()
+{
     static char year[5] = "";
     static char month[3] = "";
     static char day[3] = "";
     static char hour[3] = "";
     static char minute[3] = "";
     static char second[3] = "";
+
+    switch (rtcConfigurationMode){
+        case RTC_SET_YEAR:
+            setRtcParameter(year, 5, RTC_SET_MONTH, "\r\nType four digits for the current year (YYYY): ");
+            break;
+        case RTC_SET_MONTH:
+            setRtcParameter(month, 3, RTC_SET_DAY, "Type two digits for the current month (01-12): ");
+            break;
+        case RTC_SET_DAY:
+            setRtcParameter(day, 3, RTC_SET_HOUR, "Type two digits for the current day (01-31): ");
+            break;
+        case RTC_SET_HOUR:
+            setRtcParameter(hour, 3, RTC_SET_MINUTE, "Type two digits for the current hour (00-23): ");
+            break;
+        case RTC_SET_MINUTE:
+            setRtcParameter(minute, 3, RTC_SET_SECOND, "Type two digits for the current minutes (00-59): ");
+            break;
+        case RTC_SET_SECOND:
+            setRtcParameter(second, 3, RTC_CONFIGURED, "Type two digits for the current seconds (00-59): ");
+            break;
+        case RTC_CONFIGURED:
+            dateAndTimeWrite( atoi(year), atoi(month), atoi(day), 
+                              atoi(hour), atoi(minute), atoi(second) );
+            pcSerialComStringWrite("Date and time has been set\r\n");
+            rtcConfigurationMode = RTC_INIT;
+            break;
+        default:
+            rtcConfigurationMode = RTC_INIT;
+    }
     
-    pcSerialComStringWrite("\r\nType four digits for the current year (YYYY): ");
-    pcSerialComStringRead( year, 4);
-    pcSerialComStringWrite("\r\n");
-
-    pcSerialComStringWrite("Type two digits for the current month (01-12): ");
-    pcSerialComStringRead( month, 2);
-    pcSerialComStringWrite("\r\n");
-
-    pcSerialComStringWrite("Type two digits for the current day (01-31): ");
-    pcSerialComStringRead( day, 2);
-    pcSerialComStringWrite("\r\n");
-
-    pcSerialComStringWrite("Type two digits for the current hour (00-23): ");
-    pcSerialComStringRead( hour, 2);
-    pcSerialComStringWrite("\r\n");
-
-    pcSerialComStringWrite("Type two digits for the current minutes (00-59): ");
-    pcSerialComStringRead( minute, 2);
-    pcSerialComStringWrite("\r\n");
-
-    pcSerialComStringWrite("Type two digits for the current seconds (00-59): ");
-    pcSerialComStringRead( second, 2);
-    pcSerialComStringWrite("\r\n");
-    
-    pcSerialComStringWrite("Date and time has been set\r\n");
-
-    dateAndTimeWrite( atoi(year), atoi(month), atoi(day), 
-        atoi(hour), atoi(minute), atoi(second) );
 }
 
 static void commandShowDateAndTime()
