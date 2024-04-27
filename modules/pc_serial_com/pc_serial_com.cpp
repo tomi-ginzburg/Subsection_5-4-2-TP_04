@@ -188,8 +188,9 @@ static void pcSerialComCommandUpdate( char receivedChar )
         case 'c': case 'C': commandShowCurrentTemperatureInCelsius(); break;
         case 'f': case 'F': commandShowCurrentTemperatureInFahrenheit(); break;
         case 's': case 'S': 
-            rtcConfigurationMode = RTC_SET_YEAR;
-            rtcStrLength = 0; 
+            if (rtcConfigurationMode == RTC_INIT){
+                rtcConfigurationMode = RTC_SET_YEAR;
+            } 
             break;
         case 't': case 'T': commandShowDateAndTime(); break;
         case 'e': case 'E': commandShowStoredEvents(); break;
