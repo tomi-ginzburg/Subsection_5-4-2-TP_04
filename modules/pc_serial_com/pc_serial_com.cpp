@@ -74,6 +74,9 @@ static void commandShowCurrentTemperatureInFahrenheit();
 static void commandSetDateAndTime();
 static void commandShowDateAndTime();
 static void commandShowStoredEvents();
+static void setDrateAndTimeUpdate();
+static void setRtcParameter(char* str, const int strMaxLength,
+                            const rtcConfiguration_t nextState, const char* strToDisplay);
 
 //=====[Implementations of public functions]===================================
 
@@ -100,7 +103,7 @@ void pcSerialComStringWrite( const char* str )
 void pcSerialComUpdate()
 {
     if (rtcConfigurationMode != RTC_INIT){
-        setDateAndTimeUpdate();
+        setDrateAndTimeUpdate();
     }
     char receivedChar = pcSerialComCharRead();
     if( receivedChar != '\0' ) {
@@ -283,22 +286,28 @@ static void setRtcParameter(char* str, const int strMaxLength,
                             const rtcConfiguration_t nextState, const char* strToDisplay)
 {
     static int strLength = 0;
+    static bool strDisplay = false;
     if (strLength < strMaxLength){
-        if (strLength == 0){
+        if (strLength == 0 && strDisplay == false){
             pcSerialComStringWrite(strToDisplay);
+            strDisplay = true;
         }
         char receivedChar = pcSerialComCharRead();
-        if (receivedChar != '/0'){
+        if (receivedChar != '\0'){
             str[strLength] = receivedChar;
             strLength++;
         }
     }
-    pcSerialComStringWrite("\r\n");
-    rtcConfigurationMode = nextState;
-    strLength = 0;
+    else{
+        pcSerialComStringWrite("\r\n");
+        rtcConfigurationMode = nextState;
+        str[strLength] = '\0';
+        strLength = 0;
+        strDisplay = false;
+    }
 }
 
-static void setDateAndTimeUpdate()
+static void setDrateAndTimeUpdate()
 {
     static char year[5] = "";
     static char month[3] = "";
@@ -309,22 +318,22 @@ static void setDateAndTimeUpdate()
 
     switch (rtcConfigurationMode){
         case RTC_SET_YEAR:
-            setRtcParameter(year, 5, RTC_SET_MONTH, "\r\nType four digits for the current year (YYYY): ");
+            setRtcParameter(year, 4, RTC_SET_MONTH, "\r\nType four digits for the current year (YYYY): ");
             break;
         case RTC_SET_MONTH:
-            setRtcParameter(month, 3, RTC_SET_DAY, "Type two digits for the current month (01-12): ");
+            setRtcParameter(month, 2, RTC_SET_DAY, "Type two digits for the current month (01-12): ");
             break;
         case RTC_SET_DAY:
-            setRtcParameter(day, 3, RTC_SET_HOUR, "Type two digits for the current day (01-31): ");
+            setRtcParameter(day, 2, RTC_SET_HOUR, "Type two digits for the current day (01-31): ");
             break;
         case RTC_SET_HOUR:
-            setRtcParameter(hour, 3, RTC_SET_MINUTE, "Type two digits for the current hour (00-23): ");
+            setRtcParameter(hour, 2, RTC_SET_MINUTE, "Type two digits for the current hour (00-23): ");
             break;
         case RTC_SET_MINUTE:
-            setRtcParameter(minute, 3, RTC_SET_SECOND, "Type two digits for the current minutes (00-59): ");
+            setRtcParameter(minute, 2, RTC_SET_SECOND, "Type two digits for the current minutes (00-59): ");
             break;
         case RTC_SET_SECOND:
-            setRtcParameter(second, 3, RTC_CONFIGURED, "Type two digits for the current seconds (00-59): ");
+            setRtcParameter(second, 2, RTC_CONFIGURED, "Type two digits for the current seconds (00-59): ");
             break;
         case RTC_CONFIGURED:
             dateAndTimeWrite( atoi(year), atoi(month), atoi(day), 
